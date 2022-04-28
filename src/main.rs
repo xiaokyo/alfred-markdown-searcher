@@ -6,7 +6,6 @@ use walkdir::WalkDir;
 mod markdown;
 use self::markdown::Markdown;
 
-
 #[derive(Debug, Clone)]
 struct IoArg {
     query: String,
@@ -51,46 +50,48 @@ fn main() {
     let io_arg = parse_args();
     let query = io_arg.clone().query;
     // println!("{:?}", io_arg);
-    let dir_path = io_arg.clone().paths[0].to_string();
+    let paths = io_arg.clone().paths;
 
     let mut items: Vec<Markdown> = Vec::new();
 
-    let dirs = WalkDir::new(dir_path).max_depth(5);
-    for entry in dirs {
-        if items.len() > 10 {
-            break;
-        }
+    for dir_path in paths {
+        let dirs = WalkDir::new(dir_path).max_depth(4);
+        for entry in dirs {
+            if items.len() > 10 {
+                break;
+            }
 
-        let entry = entry.unwrap();
-        let path = entry.path().to_string_lossy().to_string();
+            let entry = entry.unwrap();
+            let path = entry.path().to_string_lossy().to_string();
 
-        // 处理忽略数组
-        let mut has_ignores = false;
+            // 处理忽略数组
+            let mut has_ignores = false;
 
-        for ignore_text in io_arg.clone().ignores {
-            let is_has: Vec<_> = path.match_indices(ignore_text.as_str()).collect();
-            if is_has.len() > 0 {
-                has_ignores = true;
+            for ignore_text in io_arg.clone().ignores {
+                let is_has: Vec<_> = path.match_indices(ignore_text.as_str()).collect();
+                if is_has.len() > 0 {
+                    has_ignores = true;
+                    continue;
+                }
+            }
+
+            if has_ignores {
+                // 有忽略的直接跳过这次循环
                 continue;
             }
-        }
 
-        if has_ignores {
-            // 有忽略的直接跳过这次循环
-            continue;
-        }
-
-        if path.ends_with(".md") {
-            // 只处理markdown
-            // markdown
-            let md = Markdown::new(&path);
-            let new_md = md.clone();
-            let content = md.get_content();
-            let finds: Vec<_> = content.match_indices(query.as_str()).collect();
-            if finds.len() > 0 {
-                let md = new_md.set_part(finds[0].0);
-                // println!("{}", md.file_name);
-                items.push(md);
+            if path.ends_with(".md") {
+                // 只处理markdown
+                // markdown
+                let md = Markdown::new(&path);
+                let new_md = md.clone();
+                let content = md.get_content();
+                let finds: Vec<_> = content.match_indices(query.as_str()).collect();
+                if finds.len() > 0 {
+                    let md = new_md.set_part(finds[0].0);
+                    // println!("{}", md.file_name);
+                    items.push(md);
+                }
             }
         }
     }
