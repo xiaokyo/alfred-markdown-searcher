@@ -1,7 +1,16 @@
 [package]
-name = "alfred-markdown-searcher"
-version = "0.1.0"
+authors = ["xiaok <xiaokyooliver@gmail.com>"]
+categories = ["command-line-utilities"]
+description = "Alfred Workflow for searching markdown files"
+documentation = "https://docs.rs/alfred-markdown-searcher"
 edition = "2021"
+exclude = ["/record.gif", "/.vscode"]
+keywords = ["cli", "alfred", "workflow", "markdown", "search"]
+license = "MIT OR Apache-2.0"
+name = "alfred-markdown-searcher"
+readme = "README.md"
+repository = "https://github.com/xiaokyo/alfred-markdown-searcher"
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
