@@ -2,7 +2,10 @@ use alfred;
 use std::env;
 use std::io;
 use walkdir::WalkDir;
-use markdown_find_content::markdown::Markdown;
+
+mod markdown;
+use self::markdown::Markdown;
+
 
 #[derive(Debug, Clone)]
 struct IoArg {
