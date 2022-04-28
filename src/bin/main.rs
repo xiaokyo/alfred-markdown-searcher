@@ -1,33 +1,47 @@
 use alfred;
 use std::env;
-use std::fs;
 use std::io;
 use walkdir::WalkDir;
+use markdown_find_content::markdown::Markdown;
 
 #[derive(Debug, Clone)]
 struct IoArg {
     query: String,
-    paths: Vec<String>
+    paths: Vec<String>,
+    ignores: Vec<String>,
 }
 
+/**
+ * 过滤输入参数
+ */
 fn parse_args() -> IoArg {
     let _args: Vec<String> = env::args().collect();
 
-    let mut paths:Vec<String> = Vec::new();
+    let mut paths: Vec<String> = Vec::new();
     let mut query: String = String::from("");
+    let mut ignores: Vec<String> = vec![
+        String::from("/node_modules"),
+        String::from("/dist"),
+        String::from("/build"),
+        String::from("/target"),
+    ];
     for (index, arg) in _args.iter().enumerate() {
-        if let "-p" = arg.as_str() {
-            let path_index = index + 1;
-            paths.push(_args[path_index].clone());
-        } else if let "-q" = arg.as_str() {
-            if query == "" {
-                let query_index = index + 1;
-                query = _args[query_index].to_string();
+        let next = index + 1;
+        match arg.as_str() {
+            "-p" => paths.push(_args[next].clone()),
+            "-q" => query = _args[next].to_string(),
+            "-i" => ignores.push(_args[next].clone()),
+            _ => {
+                // panic!("有未知参数传入");
             }
         }
     }
 
-    IoArg { query, paths }
+    IoArg {
+        query,
+        paths,
+        ignores,
+    }
 }
 
 fn main() {
@@ -47,9 +61,19 @@ fn main() {
         let entry = entry.unwrap();
         let path = entry.path().to_string_lossy().to_string();
 
-        // 忽略node_modules
-        let has_node_modules: Vec<_> = path.match_indices("node_modules").collect();
-        if has_node_modules.len() > 0 {
+        // 处理忽略数组
+        let mut has_ignores = false;
+
+        for ignore_text in io_arg.clone().ignores {
+            let is_has: Vec<_> = path.match_indices(ignore_text.as_str()).collect();
+            if is_has.len() > 0 {
+                has_ignores = true;
+                continue;
+            }
+        }
+
+        if has_ignores {
+            // 有忽略的直接跳过这次循环
             continue;
         }
 
@@ -90,57 +114,5 @@ fn workflow_output(markdowns: Vec<Markdown>, json: bool) {
         // alfred::json::write_items(io::stdout(), &items).expect("Couldn't write items to Alfred");
     } else {
         alfred::xml::write_items(io::stdout(), &items).expect("Couldn't write items to Alfred");
-    }
-}
-
-#[derive(Clone, Debug)]
-struct Markdown {
-    file_name: String,
-    file_path: String,
-    file_content: String,
-    part: String,
-}
-
-impl Markdown {
-    pub fn new(file_path: &String) -> Markdown {
-        let file_content =
-            fs::read_to_string(file_path).expect("Something went wrong reading the file");
-        let split_path = file_path.split_inclusive("/");
-        let file_name = split_path.last();
-
-        if let Some(file_name) = file_name {
-            let file_name = file_name.to_string();
-            Markdown {
-                file_name,
-                file_path: file_path.to_string(),
-                file_content,
-                part: String::from(""),
-            }
-        } else {
-            panic!("找不到文件: {}", file_path);
-        }
-    }
-
-    pub fn get_content(self) -> String {
-        self.file_content
-    }
-
-    pub fn set_part(mut self, _index: usize) -> Markdown {
-        // let index = self.index;
-        let s1 = String::from(&self.file_content);
-        // let mut left: usize = 0;
-        // let mut right: usize = self.file_content.len();
-
-        // if index - 50 > 0 {
-        //     left = index - 50;
-        // }
-
-        // if index + 50 < right {
-        //     right = index + 50
-        // }
-        let finds: Vec<_> = s1.match_indices("\n").collect();
-        let result = &s1[0..s1.len()].trim().replacen("\n", "", finds.len());
-        self.part = result.to_string();
-        self
     }
 }
