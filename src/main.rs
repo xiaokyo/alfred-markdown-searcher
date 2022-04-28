@@ -68,8 +68,8 @@ fn main() {
             let mut has_ignores = false;
 
             for ignore_text in io_arg.clone().ignores {
-                let is_has: Vec<_> = path.match_indices(ignore_text.as_str()).collect();
-                if is_has.len() > 0 {
+                let is_has = path.contains(ignore_text.as_str());
+                if is_has {
                     has_ignores = true;
                     continue;
                 }
@@ -84,12 +84,19 @@ fn main() {
                 // 只处理markdown
                 // markdown
                 let md = Markdown::new(&path);
-                let new_md = md.clone();
-                let content = md.get_content();
-                let finds: Vec<_> = content.match_indices(query.as_str()).collect();
-                if finds.len() > 0 {
-                    let md = new_md.set_part(finds[0].0);
-                    // println!("{}", md.file_name);
+                let content = md.clone().get_content();
+                let filename = md.clone().file_name;
+                let find_content = content.find(query.as_str());
+
+                if let Some(find_index) = find_content {
+                    let md = md.clone().set_part(find_index);
+                    items.push(md);
+                    continue;
+                }
+
+                if filename.contains(query.as_str()) {
+                    // 标题内有包含搜索词的
+                    let md = md.clone().set_part(0);
                     items.push(md);
                 }
             }

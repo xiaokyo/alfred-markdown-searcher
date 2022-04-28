@@ -33,20 +33,9 @@ impl Markdown {
     }
 
     pub fn set_part(mut self, _index: usize) -> Markdown {
-        // let index = self.index;
         let s1 = String::from(&self.file_content);
-        // let mut left: usize = 0;
-        // let mut right: usize = self.file_content.len();
-
-        // if index - 50 > 0 {
-        //     left = index - 50;
-        // }
-
-        // if index + 50 < right {
-        //     right = index + 50
-        // }
         let finds: Vec<_> = s1.match_indices("\n").collect();
-        let result = &s1[0..s1.len()].trim().replacen("\n", "", finds.len());
+        let result = &s1[_index..s1.len()].trim().replacen("\n", "", finds.len());
         self.part = result.to_string();
         self
     }
